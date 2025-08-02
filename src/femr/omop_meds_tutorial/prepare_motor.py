@@ -85,8 +85,7 @@ def main(args):
                 num_tasks=8 * 1024,
                 num_bins=8,
                 final_layer_size=512,
-                codes_to_skip=codes_to_skip,
-                num_proc=num_threads
+                codes_to_skip=codes_to_skip
             )
 
             with open(task_path, 'wb') as f:
