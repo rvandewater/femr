@@ -172,7 +172,7 @@ def create_omop_meds_tutorial_argparser():
         # this is decided based on the 99% percentile of the number of tokens
         default=8192,
     )
-    parser.add_argument("--pre_split", action="store_true", help="Whether the splits have been "
+    parser.add_argument("--pre_split", action="store", dest="pre_split", default=False, required=False, help="Whether the splits have been "
                                                                 "generated already in train, tuning, and held_out sets")
     return parser
 
