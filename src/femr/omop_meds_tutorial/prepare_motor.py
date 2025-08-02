@@ -68,7 +68,6 @@ def main(args):
                 main_database,
                 vocab_size=1024 * 16,
                 ontology=ontology,
-                num_proc=num_threads
             )
             # Save the tokenizer to the same directory as the model
             tokenizer.save_pretrained(tokenizer_path)
@@ -172,8 +171,12 @@ def create_omop_meds_tutorial_argparser():
         # this is decided based on the 99% percentile of the number of tokens
         default=8192,
     )
-    parser.add_argument("--pre_split", action="store", dest="pre_split", default=False, required=False, help="Whether the splits have been "
-                                                                "generated already in train, tuning, and held_out sets")
+    parser.add_argument("--pre_split",
+                        action="store",
+                        dest="pre_split",
+                        default=False,
+                        required=False,
+                        help="Whether the splits have been generated already in train, tuning, and held_out sets")
     return parser
 
 
