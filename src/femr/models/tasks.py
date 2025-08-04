@@ -243,8 +243,8 @@ def _prefit_motor_map(
     task_time_stats: List[Any] = [[0, 0, femr.stat_utils.OnlineStatistics()] for _ in range(len(tasks))]
     event_times = femr.stat_utils.ReservoirSampler(100_000)
     task_set = set(tasks)
-
-    for subject in tqdm(subjects, desc="Processing subjects", leave=False,
+    print(f"Processing {len(tasks)} tasks: {task_set}")
+    for subject in tqdm(subjects, desc="Processing subjects", leave=True,
                         total=len(subjects) if hasattr(subjects, '__len__') else None):
         calculator = SurvivalCalculator(ontology, subject, task_set)
 
