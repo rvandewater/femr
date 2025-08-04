@@ -244,7 +244,8 @@ def _prefit_motor_map(
     event_times = femr.stat_utils.ReservoirSampler(100_000)
     task_set = set(tasks)
 
-    for subject in subjects:
+    for subject in tqdm(subjects, desc="Processing subjects", leave=False,
+                        total=len(subjects) if hasattr(subjects, '__len__') else None):
         calculator = SurvivalCalculator(ontology, subject, task_set)
 
         birth = femr.pat_utils.get_subject_birthdate(subject)
