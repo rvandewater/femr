@@ -85,7 +85,7 @@ def main(args):
             task_start = timer()
             motor_task = femr.models.tasks.MOTORTask.fit_pretraining_task_info(
                 main_database, tokenizer,
-                num_tasks=8 * 1024,
+                num_tasks=16384, #8 * 1024,
                 num_bins=8,
                 final_layer_size=512,
                 codes_to_skip=codes_to_skip
