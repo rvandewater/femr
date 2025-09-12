@@ -8,7 +8,7 @@ import femr.models.tasks
 import femr.models.processor
 import pandas as pd
 import polars as pl
-
+from timeit import default_timer as timer
 
 def main(args):
     pretraining_data_path = pathlib.Path(args.pretraining_data)
@@ -40,31 +40,40 @@ def main(args):
         else:
             with open(ontology_path, 'rb') as f:
                 ontology = pickle.load(f)
+        if not args.pre_split:
+            subject_splits = pd.read_parquet(subject_splits_path)
+            subject_splits = subject_splits[subject_splits.subject_id.isin(subject_ids)]
+            train_tuning_split = subject_splits[~subject_splits.split.isin(["held_out"])].subject_id.tolist()
+            test_split = subject_splits[subject_splits.split.isin(["held_out"])].subject_id.tolist()
+            main_split = femr.splits.SubjectSplit(train_tuning_split, test_split)
+            main_split.save_to_csv(str(pretraining_data_path / 'main_split.csv'))
 
-        subject_splits = pd.read_parquet(subject_splits_path)
-        subject_splits = subject_splits[subject_splits.subject_id.isin(subject_ids)]
-        train_tuning_split = subject_splits[~subject_splits.split.isin(["held_out"])].subject_id.tolist()
-        test_split = subject_splits[subject_splits.split.isin(["held_out"])].subject_id.tolist()
-        main_split = femr.splits.SubjectSplit(train_tuning_split, test_split)
-        main_split.save_to_csv(str(pretraining_data_path / 'main_split.csv'))
-
-        train_split = femr.splits.generate_hash_split(main_split.train_subject_ids, 17, frac_test=0.05)
-
-        main_database = database.filter(main_split.train_subject_ids)
-        train_database = main_database.filter(train_split.train_subject_ids)
-        val_database = main_database.filter(train_split.test_subject_ids)
-
+            train_split = femr.splits.generate_hash_split(main_split.train_subject_ids, 17, frac_test=0.05)
+            train_val_ids = main_split.train_subject_ids
+            train_ids = train_split.train_subject_ids
+            val_ids = train_split.test_subject_ids
+        else:
+            subject_splits = pl.read_parquet(subject_splits_path)
+            train_val_ids = subject_splits.filter(pl.col("split") != "held_out").select("subject_id").to_series().to_list()
+            train_ids = subject_splits.filter(pl.col("split") == "train").select("subject_id").to_series().to_list()
+            val_ids = subject_splits.filter(pl.col("split") == "tuning").select("subject_id").to_series().to_list()
+        main_database = database.filter(train_val_ids)
+        train_database = main_database.filter(train_ids)
+        val_database = main_database.filter(val_ids)
+        print(f"Training with {len(train_database)} training subjects and {len(val_database)} validation subjects")
         tokenizer_path = pretraining_data_path / 'tokenizer'
         if not tokenizer_path.exists():
-            print("Train tokenizer")
+            print("Train tokenizer. This will take several hours")
+            tokenizer_start = timer()
             tokenizer = HierarchicalTokenizer.train(
                 main_database,
                 vocab_size=1024 * 16,
                 ontology=ontology,
-                num_proc=num_threads
             )
             # Save the tokenizer to the same directory as the model
             tokenizer.save_pretrained(tokenizer_path)
+            tokenizer_end = timer()
+            print(f"Tokenizer trained in {tokenizer_end - tokenizer_start / 3600:.2f} hours")
         else:
             tokenizer = HierarchicalTokenizer.from_pretrained(tokenizer_path, ontology=ontology)
 
@@ -72,17 +81,17 @@ def main(args):
 
         if not task_path.exists():
             # Second, we need to prefit the MOTOR model. This is necessary because piecewise exponential models are unstable without an initial fit
-            print("Train MOTOR task")
-
+            print("Train MOTOR task. This will take several hours")
+            task_start = timer()
             motor_task = femr.models.tasks.MOTORTask.fit_pretraining_task_info(
                 main_database, tokenizer,
-                num_tasks=8 * 1024,
+                num_tasks=16384, #8 * 1024,
                 num_bins=8,
                 final_layer_size=512,
-                codes_to_skip=codes_to_skip,
-                num_proc=num_threads
+                codes_to_skip=codes_to_skip
             )
-
+            task_end = timer()
+            print(f"MOTOR task trained in {task_end - task_start / 3600:.2f} hours")
             with open(task_path, 'wb') as f:
                 pickle.dump(motor_task, f)
 
@@ -170,6 +179,12 @@ def create_omop_meds_tutorial_argparser():
         # this is decided based on the 99% percentile of the number of tokens
         default=16384,
     )
+    parser.add_argument("--pre_split",
+                        action="store",
+                        dest="pre_split",
+                        default=False,
+                        required=False,
+                        help="Whether the splits have been generated already in train, tuning, and held_out sets")
     return parser
 
 

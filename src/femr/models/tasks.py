@@ -12,6 +12,7 @@ import numpy as np
 import scipy.sparse
 import torch
 import warnings
+from tqdm import tqdm
 
 import femr.models.config
 import femr.models.tokenizer
@@ -19,7 +20,8 @@ import femr.ontology
 import femr.pat_utils
 import femr.stat_utils
 import random
-
+import cProfile
+import pstats
 
 class Task(abc.ABC):
     def __init__(self):
@@ -241,8 +243,9 @@ def _prefit_motor_map(
     task_time_stats: List[Any] = [[0, 0, femr.stat_utils.OnlineStatistics()] for _ in range(len(tasks))]
     event_times = femr.stat_utils.ReservoirSampler(100_000)
     task_set = set(tasks)
-
-    for subject in subjects:
+    print(f"Processing {len(tasks)} tasks")
+    for subject in tqdm(subjects, desc="Processing subjects", leave=True,
+                        total=len(subjects) if hasattr(subjects, '__len__') else None):
         calculator = SurvivalCalculator(ontology, subject, task_set)
 
         birth = femr.pat_utils.get_subject_birthdate(subject)
@@ -307,10 +310,23 @@ class MOTORTask(Task):
 
         if len(tasks) < num_tasks:
             warnings.warn(f"Could not find enough tasks in the provided tokenizer {len(tasks)}")
+        print(f"Found {len(tasks)} tasks in the tokenizer, using {num_tasks} tasks")
+        # length_samples, stats = functools.reduce(
+        #     _prefit_motor_agg, db.map(functools.partial(_prefit_motor_map, tasks=tasks, ontology=tokenizer.ontology))
+        # )
+        # Wrap the db.map iterator with tqdm
+        profiler = cProfile.Profile()
+        profiler.enable()
+        mapped_results = list(tqdm(
+            db.map(functools.partial(_prefit_motor_map, tasks=tasks, ontology=tokenizer.ontology)),
+            desc="Processing subjects",
+            total=len(db) if hasattr(db, '__len__') else None
+        ))
+        profiler.disable()
+        stats = pstats.Stats(profiler)
+        stats.sort_stats('cumulative').print_stats(10)
 
-        length_samples, stats = functools.reduce(
-            _prefit_motor_agg, db.map(functools.partial(_prefit_motor_map, tasks=tasks, ontology=tokenizer.ontology))
-        )
+        length_samples, stats = functools.reduce(_prefit_motor_agg, mapped_results)
 
         time_bins = np.percentile(length_samples.samples, np.linspace(0, 100, num_bins + 1))
         time_bins[0] = 0
@@ -319,7 +335,7 @@ class MOTORTask(Task):
 
         task_data = []
 
-        for task, task_stats in zip(tasks, stats):
+        for task, task_stats in tqdm(zip(tasks, stats), desc="Processing tasks", total=len(tasks)):
             frac_events = task_stats[1] / (task_stats[0] + task_stats[1])
             rate = frac_events / task_stats[2].mean()
 
