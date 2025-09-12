@@ -244,37 +244,41 @@ def _prefit_motor_map(
     event_times = femr.stat_utils.ReservoirSampler(100_000)
     task_set = set(tasks)
     print(f"Processing {len(tasks)} tasks")
+    # print(f"Task times: {task_time_stats}")
+    print(f"Processing {len(subjects)} subjects ")
     for subject in tqdm(subjects, desc="Processing subjects", leave=True,
                         total=len(subjects) if hasattr(subjects, '__len__') else None):
-        calculator = SurvivalCalculator(ontology, subject, task_set)
+        try:
+            calculator = SurvivalCalculator(ontology, subject, task_set)
 
-        birth = femr.pat_utils.get_subject_birthdate(subject)
+            birth = femr.pat_utils.get_subject_birthdate(subject)
 
-        for event, next_event in zip(subject.events, subject.events[1:]):
-            if (event.time is None) or (event.time.date() == birth.date()) or (
-                    event.time.date() == next_event.time.date()):
-                continue
+            for event, next_event in zip(subject.events, subject.events[1:]):
+                if (event.time is None) or (event.time.date() == birth.date()) or (
+                        event.time.date() == next_event.time.date()):
+                    continue
 
-            censor_time, tte = calculator.get_future_events_for_time(event.time)
+                censor_time, tte = calculator.get_future_events_for_time(event.time)
 
-            if len(tte) == 0:
-                continue
+                if len(tte) == 0:
+                    continue
 
-            for i, task in enumerate(tasks):
-                if task in tte:
-                    time = tte[task]
-                    is_censored = False
-                else:
-                    time = censor_time
-                    is_censored = True
+                for i, task in enumerate(tasks):
+                    if task in tte:
+                        time = tte[task]
+                        is_censored = False
+                    else:
+                        time = censor_time
+                        is_censored = True
 
-                if is_censored:
-                    task_time_stats[i][0] += 1
-                else:
-                    event_times.add(time.total_seconds(), 1)
-                    task_time_stats[i][1] += 1
-                task_time_stats[i][2].add(1, time.total_seconds())
-
+                    if is_censored:
+                        task_time_stats[i][0] += 1
+                    else:
+                        event_times.add(time.total_seconds(), 1)
+                        task_time_stats[i][1] += 1
+                    task_time_stats[i][2].add(1, time.total_seconds())
+        except Exception as e:
+            logging.error(f"Error processing subject ID {subject.subject_id}: {e}", exc_info=True)
     return (event_times, task_time_stats)
 
 
