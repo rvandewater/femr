@@ -280,7 +280,7 @@ def _prefit_motor_map(
                         task_time_stats[i][1] += 1
                     task_time_stats[i][2].add(1, time.total_seconds())
         except Exception as e:
-            logging.error(f"Error processing subject ID {subject.subject_id}: {e}", exc_info=True)
+            print(f"Error processing subject ID {subject.subject_id}: {e}", exc_info=True)
     return (event_times, task_time_stats)
 
 
