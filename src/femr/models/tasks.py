@@ -22,6 +22,7 @@ import femr.stat_utils
 import random
 import cProfile
 import pstats
+import threading
 
 class Task(abc.ABC):
     def __init__(self):
@@ -245,9 +246,9 @@ def _prefit_motor_map(
     task_set = set(tasks)
     print(f"Processing {len(tasks)} tasks")
     # print(f"Task times: {task_time_stats}")
-    length = len(list(subjects))
+    length = sum(1 for _ in subjects)
     print(f"Processing {length} subjects ")
-    for subject in tqdm(subjects, desc="Processing subjects", leave=True,
+    for subject in tqdm(subjects, desc=f"Processing subjects {threading.current_thread().name}", leave=True,
                         total=len(subjects) if hasattr(subjects, '__len__') else None):
         try:
             calculator = SurvivalCalculator(ontology, subject, task_set)
