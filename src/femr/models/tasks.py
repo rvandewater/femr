@@ -246,15 +246,15 @@ def _prefit_motor_map(
     task_set = set(tasks)
     print(f"Processing {len(tasks)} tasks")
     # print(f"Task times: {task_time_stats}")
-    length = sum(1 for _ in subjects)
-    print(f"Processing {length} subjects ")
+    # length = sum(1 for _ in subjects)
+    # print(f"Processing {length} subjects ")
     for subject in tqdm(subjects, desc=f"Processing subjects {threading.current_thread().name}", leave=True,
                         total=len(subjects) if hasattr(subjects, '__len__') else None):
         try:
             calculator = SurvivalCalculator(ontology, subject, task_set)
 
             birth = femr.pat_utils.get_subject_birthdate(subject)
-
+            print(f"Processing subject ID {subject.subject_id} with birth date {birth} and events {len(subject.events)}")
             for event, next_event in zip(subject.events, subject.events[1:]):
                 if (event.time is None) or (event.time.date() == birth.date()) or (
                         event.time.date() == next_event.time.date()):
