@@ -245,7 +245,8 @@ def _prefit_motor_map(
     task_set = set(tasks)
     print(f"Processing {len(tasks)} tasks")
     # print(f"Task times: {task_time_stats}")
-    print(f"Processing {len(subjects)} subjects ")
+    length = len(list(subjects))
+    print(f"Processing {length} subjects ")
     for subject in tqdm(subjects, desc="Processing subjects", leave=True,
                         total=len(subjects) if hasattr(subjects, '__len__') else None):
         try:
