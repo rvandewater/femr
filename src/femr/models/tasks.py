@@ -248,6 +248,8 @@ def _prefit_motor_map(
     # print(f"Task times: {task_time_stats}")
     # length = sum(1 for _ in subjects)
     # print(f"Processing {length} subjects ")
+    counter_succes = 0
+    counter_fail = 0
     for subject in tqdm(subjects, desc=f"Processing subjects {threading.current_thread().name}", leave=True,
                         total=len(subjects) if hasattr(subjects, '__len__') else None):
         try:
@@ -279,8 +281,12 @@ def _prefit_motor_map(
                         event_times.add(time.total_seconds(), 1)
                         task_time_stats[i][1] += 1
                     task_time_stats[i][2].add(1, time.total_seconds())
+            counter_succes += 1
         except Exception as e:
             print(f"Error processing subject ID {subject.subject_id}: {e}", exc_info=True)
+            counter_fail += 1
+    print(f"Finished processing subjects {threading.current_thread().name} "
+          f"with {counter_succes} successes and {counter_fail} failures")
     return (event_times, task_time_stats)
 
 
