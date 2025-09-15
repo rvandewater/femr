@@ -21,7 +21,10 @@ LABEL_NAMES = [
 # LABEL_NAMES = ['long_los', '30d']
 # ADMISSION_EVENTS = ["Visit/IP", "Visit/ERIP", "Visit/ER", "CMS Place of Service/51", "CMS Place of Service/61"]
 # MEDS transforms omop etl
-ADMISSION_EVENTS = ["Visit//IP//start", "Visit//ERIP//start", "Visit//ER//start", "CMS Place of Service//51", "CMS Place of Service//61"]
+ADMISSION_EVENTS = ["Visit//IP//start", "Visit//ERIP//start", "Visit//ER//start",
+                    "CMS Place of Service//20//start", "CMS Place of Service//15//start"]
+ADMISSION_EVENTS_OUTPATIENT = ["Visit//OP//start", "CMS Place of Service//22//start"]
+
 
 class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
     def __init__(self, time_after_admission: datetime.timedelta):
@@ -117,6 +120,7 @@ def create_omop_meds_tutorial_arg_parser():
         required=True,
     )
     parser.add_argument("--num_threads", dest="num_threads", type=int, default=6)
+    parser.add_argument("--overwrite", dest="overwrite", action="store_true", default=False)
     return parser
 
 
@@ -124,7 +128,9 @@ def main():
     args = create_omop_meds_tutorial_arg_parser().parse_args()
     
     labels_path = Path(args.pretraining_data) / "labels"
-    labels_path.mkdir(exist_ok=False)
+    if labels_path.exists():
+        raise ValueError(f"Labels path {labels_path} already exists. Use --overwrite to overwrite.")
+    labels_path.mkdir(exist_ok=True, parents=True)
 
     with meds_reader.SubjectDatabase(args.meds_reader, num_threads=args.num_threads) as database:
         for label_name in LABEL_NAMES:
