@@ -130,7 +130,7 @@ def main():
     args = create_omop_meds_tutorial_arg_parser().parse_args()
     
     labels_path = Path(args.pretraining_data) / "labels"
-    if labels_path.exists():
+    if labels_path.exists() and not args.overwrite:
         raise ValueError(f"Labels path {labels_path} already exists. Use --overwrite to overwrite.")
     labels_path.mkdir(exist_ok=True, parents=True)
 
