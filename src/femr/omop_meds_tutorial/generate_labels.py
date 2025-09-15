@@ -19,8 +19,9 @@ LABEL_NAMES = [
     "long_los",
 ]
 # LABEL_NAMES = ['long_los', '30d']
-ADMISSION_EVENTS = ["Visit/IP", "Visit/ERIP", "CMS Place of Service/51", "CMS Place of Service/61"]
-
+# ADMISSION_EVENTS = ["Visit/IP", "Visit/ERIP", "Visit/ER", "CMS Place of Service/51", "CMS Place of Service/61"]
+# MEDS transforms omop etl
+ADMISSION_EVENTS = ["Visit//IP//start", "Visit//ERIP//start", "Visit//ER//start", "CMS Place of Service//51", "CMS Place of Service//61"]
 
 class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
     def __init__(self, time_after_admission: datetime.timedelta):
@@ -115,6 +116,7 @@ def create_omop_meds_tutorial_arg_parser():
         action="store",
         required=True,
     )
+    parser.add_argument("--num_threads", dest="num_threads", type=int, default=6)
     return parser
 
 
@@ -124,7 +126,7 @@ def main():
     labels_path = Path(args.pretraining_data) / "labels"
     labels_path.mkdir(exist_ok=False)
 
-    with meds_reader.SubjectDatabase(args.meds_reader, num_threads=6) as database:
+    with meds_reader.SubjectDatabase(args.meds_reader, num_threads=args.num_threads) as database:
         for label_name in LABEL_NAMES:
             labeler = labelers[label_name]
             labels = labeler.apply(database)
