@@ -36,6 +36,8 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
 
         for event in subject.events:
             if event.code in ADMISSION_EVENTS and event.end is not None:
+                #TODO: check if it actually finds the end
+                print(event.end)
                 if isinstance(event.end, datetime.datetime):
                     admission_ranges.add((event.time, event.end))
                 else:
@@ -134,6 +136,7 @@ def main():
 
     with meds_reader.SubjectDatabase(args.meds_reader, num_threads=args.num_threads) as database:
         for label_name in LABEL_NAMES:
+            print(f"Labeling {label_name}")
             labeler = labelers[label_name]
             labels = labeler.apply(database)
             labels.to_parquet(str(labels_path / (label_name + '.parquet')))
