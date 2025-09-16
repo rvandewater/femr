@@ -110,7 +110,7 @@ class OmopMortalityFromLastEventLabeler(femr.labelers.Labeler):
             return labels
         death_time = death_event.time if death_event else None
         last_event_time = last_event.time if last_event else None
-        if death_time
+        if death_time:
             if death_time > datetime.datetime.now():
                 # print(f"Warning: found a death time in the future for subject {subject.subject_id} at {death_time}")
                 return labels
