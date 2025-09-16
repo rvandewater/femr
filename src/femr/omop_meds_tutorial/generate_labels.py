@@ -164,11 +164,11 @@ def create_omop_meds_tutorial_arg_parser():
 def main():
     args = create_omop_meds_tutorial_arg_parser().parse_args()
     if args.verbose:
-        global VERBOSE
+        # global VERBOSE
         VERBOSE = True
         print("Verbose logging enabled")
     if args.end_times_included:
-        global END_TIMES_INCLUDED
+        # global END_TIMES_INCLUDED
         END_TIMES_INCLUDED = True
         print("Assuming end times are included in the data (event.end)")
     labels_path = Path(args.pretraining_data) / "labels"
