@@ -43,7 +43,7 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
                 latest_admission = event
             if event.code in DISCHARGE_EVENTS:
                 if latest_admission is not None and latest_admission.time < event.time:
-                    admission_ranges.add((latest_admission.time, event.end))
+                    admission_ranges.add((latest_admission.time, event.time))
                     print(f"Found admission for subject {subject.subject_id} from {latest_admission.time} to {event.end} "
                           f"with admission event {latest_admission.code} and discharge event {event.code}")
             # if event.code in ADMISSION_EVENTS and event.end is not None:
