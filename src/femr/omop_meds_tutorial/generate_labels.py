@@ -124,7 +124,7 @@ class OmopMortalityFromLastEventLabeler(femr.labelers.Labeler):
             labels.append(meds.Label(subject_id=subject.subject_id, prediction_time=last_event_time, boolean_value=True))
         else:
             # We do not label because we assume this is a mistake
-            print(f"Warning: subject {subject.subject_id} has a death time {death_time} but it was {death_time-last_event} later")
+            print(f"Warning: subject {subject.subject_id} has a death time {death_time} but it was {death_time-last_event_time} later")
         return labels
 
 
