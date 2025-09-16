@@ -156,7 +156,7 @@ def create_omop_meds_tutorial_arg_parser():
     )
     parser.add_argument("--num_threads", dest="num_threads", type=int, default=6)
     parser.add_argument("--overwrite", dest="overwrite", action="store_true", default=False)
-    parser.add_argument("--verbose", dest="overwrite", action="store_true", default=False)
+    parser.add_argument("--verbose", dest="verbose", action="store_true", default=False)
     parser.add_argument("--end_times_included", dest="end_times_included", action="store_true", default=False)
     return parser
 
@@ -164,11 +164,11 @@ def create_omop_meds_tutorial_arg_parser():
 def main():
     args = create_omop_meds_tutorial_arg_parser().parse_args()
     if args.verbose:
-        # global VERBOSE
+        global VERBOSE
         VERBOSE = True
         print("Verbose logging enabled")
     if args.end_times_included:
-        # global END_TIMES_INCLUDED
+        global END_TIMES_INCLUDED
         END_TIMES_INCLUDED = True
         print("Assuming end times are included in the data (event.end)")
     labels_path = Path(args.pretraining_data) / "labels"
