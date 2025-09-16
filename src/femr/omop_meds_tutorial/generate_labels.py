@@ -74,7 +74,7 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
         self.time_after_admission = time_after_admission
 
     def label(self, subject: meds_reader.Subject) -> List[meds.Label]:
-
+        labels = []
         admission_ranges, death_times = collect_stays(subject, END_TIMES_INCLUDED, VERBOSE)
         if len(death_times) not in [0, 1]:
             print(f"Warning: found {len(death_times)} death events in subject: {subject.subject_id}")
@@ -82,9 +82,11 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
         if len(death_times) == 1:
             death_time = list(death_times)[0]
         else:
-            death_time = datetime.datetime(9999, 1, 1)  # Very far in the future
-
-        labels = []
+            # death_time = datetime.datetime(9999, 1, 1)  # Very far in the future
+            for (admission_start, admission_end) in admission_ranges:
+                prediction_time = admission_start + self.time_after_admission
+                labels.append(
+                    meds.Label(subject_id=subject.subject_id, prediction_time=prediction_time, boolean_value=False))
 
         for (admission_start, admission_end) in admission_ranges:
             prediction_time = admission_start + self.time_after_admission
@@ -94,10 +96,12 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
             if prediction_time >= death_time:
                 print(f"Warning: prediction time {prediction_time} is after death time {death_time} for subject {subject.subject_id}")
                 continue
-            if death_time > admission_end and death_time < datetime.datetime(9999, 1, 1):
+            if death_time > admission_end:
                 print(f"Warning: death time {death_time} is before prediction time {prediction_time} for subject {subject.subject_id}")
-                continue
-            is_death = death_time < admission_end
+                # continue
+            is_death = death_time < prediction_time #< admission_end
+            if is_death:
+                print(f"Labeling subject {subject.subject_id} as death at prediction time {prediction_time} with death time {death_time}")
             labels.append(
                 meds.Label(subject_id=subject.subject_id, prediction_time=prediction_time, boolean_value=is_death))
 
