@@ -73,12 +73,17 @@ def collect_stays(subject, end_times_included=False, verbose=False):
 def find_last_event(subject, event_codes=None, horizon_min = datetime.timedelta(hours=24), verbose=False,):
     death_event = None
     event_count = 0
-    latest_event = subject.events[0]
+    # Find the first event with a time
+    while latest_event.time is None:
+        latest_event = subject.events[event_count]
+        event_count += 1
+
+    event_count = 0
     for event in subject.events:
         event_count += 1
         if event.code == meds.death_code:
             death_event = event
-        if event.time > latest_event.time:
+        if event.time is not None event.time > latest_event.time:
             if death_event and event.time > death_event.time + horizon_min:
                 continue
             latest_event = event
