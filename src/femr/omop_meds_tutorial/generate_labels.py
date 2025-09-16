@@ -90,6 +90,7 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
             return labels
         for (admission_start, admission_end) in admission_ranges:
             prediction_time = admission_start + self.time_after_admission
+            # Todo: check if we need minimum stay length
             # if prediction_time >= admission_end:
             #     continue
 
@@ -97,11 +98,11 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
                 print(f"Warning: prediction time {prediction_time} is after death time {death_time} for subject {subject.subject_id}")
                 continue
             if death_time > admission_end:
-                print(f"Warning: death time {death_time} is before prediction time {prediction_time} for subject {subject.subject_id}")
+                print(f"Warning: death time {death_time} is after prediction time {prediction_time} for subject {subject.subject_id}")
                 # continue
             is_death = death_time < prediction_time #< admission_end
             if is_death:
-                print(f"Labeling subject {subject.subject_id} as death at prediction time {prediction_time} with death time {death_time}")
+                print(f"Labeling subject {subject.subject_id} as death at prediction time {prediction_time} at {death_time_admission_start} with death time {death_time} and admission end {admission_end}")
             labels.append(
                 meds.Label(subject_id=subject.subject_id, prediction_time=prediction_time, boolean_value=is_death))
 
@@ -140,7 +141,8 @@ class OmopLongAdmissionLabeler(femr.labelers.Labeler):
 
 
 labelers: Mapping[str, femr.labelers.Labeler] = {
-    'death': OmopInpatientMortalityLabeler(time_after_admission=datetime.timedelta(hours=48)),
+    # 'death': OmopInpatientMortalityLabeler(time_after_admission=datetime.timedelta(hours=48)),
+    'death': OmopInpatientMortalityLabeler(time_after_admission=datetime.timedelta(days=30)),
     'long_los': OmopLongAdmissionLabeler(time_after_admission=datetime.timedelta(hours=48),
                                          admission_length=datetime.timedelta(days=7)),
 }
