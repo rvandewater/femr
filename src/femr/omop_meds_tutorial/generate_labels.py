@@ -71,14 +71,14 @@ def collect_stays(subject, end_times_included=False, verbose=False):
     return admission_ranges, death_times
 
 def find_last_event(subject, event_codes=None, horizon_min = datetime.timedelta(hours=24), verbose=False,):
-    latest_event = None
     death_event = None
     event_count = 0
+    latest_event = subject.events[0]
     for event in subject.events:
         event_count += 1
         if event.code == meds.death_code:
             death_event = event
-        if latest_event and event.time > latest_event.time:
+        if event.time > latest_event.time:
             if death_event and event.time > death_event.time + horizon_min:
                 continue
             latest_event = event
@@ -101,7 +101,7 @@ class OmopMortalityFromLastEventLabeler(femr.labelers.Labeler):
             return labels
         death_time = death_event.time if death_event else None
         last_event_time = last_event.time if last_event else None
-        if death_event and death_time > datetime.datetime.now():
+        if death_time and death_time > datetime.datetime.now():
             print(f"Warning: found a death time in the future for subject {subject.subject_id} at {death_time}")
             return labels
 
