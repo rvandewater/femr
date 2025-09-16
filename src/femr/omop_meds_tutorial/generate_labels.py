@@ -23,6 +23,8 @@ LABEL_NAMES = [
 # MEDS transforms omop etl
 ADMISSION_EVENTS = ["Visit//IP//start", "Visit//ERIP//start", "Visit//ER//start",
                     "CMS Place of Service//20//start", "CMS Place of Service//15//start"]
+DISCHARGE_EVENTS = ["Visit//IP//end", "Visit//ERIP//end", "Visit//ER//end",
+                    "CMS Place of Service//20//end", "CMS Place of Service//15//end"]
 ADMISSION_EVENTS_OUTPATIENT = ["Visit//OP//start", "CMS Place of Service//22//start"]
 
 
@@ -33,15 +35,24 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
     def label(self, subject: meds_reader.Subject) -> List[meds.Label]:
         admission_ranges = set()
         death_times = set()
-
+        admission_events =[]
+        discharge_events = []
+        latest_admission = None
         for event in subject.events:
-            if event.code in ADMISSION_EVENTS and event.end is not None:
-                #TODO: check if it actually finds the end
-                print(event.end)
-                if isinstance(event.end, datetime.datetime):
-                    admission_ranges.add((event.time, event.end))
-                else:
-                    admission_ranges.add((event.time, datetime.datetime.fromisoformat(event.end)))
+            if event.code in ADMISSION_EVENTS:
+                latest_admission = event
+            if event.code in DISCHARGE_EVENTS:
+                if latest_admission is not None and latest_admission.time < event.time:
+                    admission_ranges.add((latest_admission.time, event.end))
+                    print(f"Found admission for subject {subject.subject_id} from {latest_admission.time} to {event.end} "
+                          f"with admission event {latest_admission.code} and discharge event {event.code}")
+            # if event.code in ADMISSION_EVENTS and event.end is not None:
+            #     #TODO: check if it actually finds the end. Answer: probably not.
+            #     print(event.end)
+            #     if isinstance(event.end, datetime.datetime):
+            #         admission_ranges.add((event.time, event.end))
+            #     else:
+            #         admission_ranges.add((event.time, datetime.datetime.fromisoformat(event.end)))
             if event.code == meds.death_code:
                 death_times.add(event.time)
 
