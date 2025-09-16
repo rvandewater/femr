@@ -85,7 +85,7 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
         else:
             death_time = None
 
-        if death_time > datetime.datetime.now():
+        if death_time and death_time > datetime.datetime.now():
             print(f"Warning: found a death time in the future for subject {subject.subject_id} at {death_time}")
             death_time = None
 
