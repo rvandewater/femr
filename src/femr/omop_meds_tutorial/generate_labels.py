@@ -87,10 +87,9 @@ def find_last_event(subject, event_codes=None, horizon_min = datetime.timedelta(
     return latest_event, death_event, event_count
 
 class OmopMortalityFromLastEventLabeler(femr.labelers.Labeler):
-    def __init__(self, time_after_admission: datetime.timedelta, horizon_min: datetime.timedelta = datetime.timedelta(hours=24),
+    def __init__(self, min_total_events=30, horizon_min: datetime.timedelta = datetime.timedelta(hours=24),
                  horizon_max: datetime.timedelta = datetime.timedelta(days=30)):
-        self.time_after_admission = time_after_admission
-        self.min_total_events = 30
+        self.min_total_events = min_total_events
         # Last event is allowed to be before horizon min
         self.horizon_min = horizon_min
         # Last event must be after horizon max
