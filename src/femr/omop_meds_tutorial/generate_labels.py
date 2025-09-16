@@ -27,6 +27,7 @@ DISCHARGE_EVENTS = ["Visit//IP//end", "Visit//ERIP//end", "Visit//ER//end",
                     "CMS Place of Service//20//end", "CMS Place of Service//15//end"]
 ADMISSION_EVENTS_OUTPATIENT = ["Visit//OP//start", "CMS Place of Service//22//start"]
 END_TIMES_INCLUDED=False
+VERBOSE=False
 
 def collect_stays(subject, end_times_included=False, verbose=False):
     admission_ranges = set()
@@ -72,7 +73,7 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
 
     def label(self, subject: meds_reader.Subject) -> List[meds.Label]:
 
-        admission_ranges, death_times = collect_stays(subject, END_TIMES_INCLUDED)
+        admission_ranges, death_times = collect_stays(subject, END_TIMES_INCLUDED, VERBOSE)
 
         if len(death_times) not in [0, 1]:
             print(f"Warning: found {len(death_times)} death events in subject: {subject.subject_id}")
@@ -115,7 +116,7 @@ class OmopLongAdmissionLabeler(femr.labelers.Labeler):
         #             admission_ranges.add((event.time, event.end))
         #         else:
         #             admission_ranges.add((event.time, datetime.datetime.fromisoformat(event.end)))
-        collect_stays(subject, end_times_included=END_TIMES_INCLUDED, verbose=False)
+        collect_stays(subject, end_times_included=END_TIMES_INCLUDED, verbose=VERBOSE)
         labels = []
         for (admission_start, admission_end) in admission_ranges:
             prediction_time = admission_start + self.time_after_admission
@@ -155,12 +156,20 @@ def create_omop_meds_tutorial_arg_parser():
     parser.add_argument("--num_threads", dest="num_threads", type=int, default=6)
     parser.add_argument("--overwrite", dest="overwrite", action="store_true", default=False)
     parser.add_argument("--verbose", dest="overwrite", action="store_true", default=False)
+    parser.add_argument("--end_times_included", dest="end_times_included", action="store_true", default=False)
     return parser
 
 
 def main():
     args = create_omop_meds_tutorial_arg_parser().parse_args()
-    
+    if args.verbose:
+        global VERBOSE
+        VERBOSE = True
+        print("Verbose logging enabled")
+    if args.end_times_included:
+        global END_TIMES_INCLUDED
+        END_TIMES_INCLUDED = True
+        print("Assuming end times are included in the data (event.end)")
     labels_path = Path(args.pretraining_data) / "labels"
     if labels_path.exists() and not args.overwrite:
         raise ValueError(f"Labels path {labels_path} already exists. Use --overwrite to overwrite.")
