@@ -83,7 +83,7 @@ def find_last_event(subject, event_codes=None, horizon_min = datetime.timedelta(
         event_count += 1
         if event.code == meds.death_code:
             death_event = event
-        if event.time is not None event.time > latest_event.time:
+        if event.time is not None and event.time > latest_event.time:
             if death_event and event.time > death_event.time + horizon_min:
                 continue
             latest_event = event
