@@ -45,17 +45,18 @@ def collect_stays(subject, end_times_included=False, verbose=False):
                     latest_time = max(possible_admissions)
                     latest_admission = admission_dict.pop(latest_time)
                     admission_ranges.add((latest_admission.time, event.time))
-                    # if verbose:
-                    print(
-                        f"Matched admission for subject {subject.subject_id} from {latest_admission.time} to {event.time} "
-                        f"with admission event {latest_admission.code} and discharge event {event.code}")
+                    if verbose:
+                        print(
+                            f"Matched admission for subject {subject.subject_id} from {latest_admission.time} to {event.time} "
+                            f"with admission event {latest_admission.code} and discharge event {event.code}")
                         # print(
                         #     f"Found admission for subject {subject.subject_id} from {latest_admission.time} to {event.time} "
                         #     f"with admission event {latest_admission.code} and discharge event {event.code}")
             if event.code == meds.death_code:
                 death_times.add(event.time)
-                if verbose:
-                    print(f"Found death for subject {subject.subject_id} at {event.time}")
+                # if verbose:
+                print(f"Found death for subject {subject.subject_id} at {event.time} time since admission "
+                      f"{event.time - max(possible_admissions)}")
     else:
         for event in subject.events:
             if event.code in ADMISSION_EVENTS and event.end is not None:
@@ -67,13 +68,6 @@ def collect_stays(subject, end_times_included=False, verbose=False):
                 death_times.add(event.time)
 
     return admission_ranges, death_times
-        # if event.code in ADMISSION_EVENTS and event.end is not None:
-        #     #TODO: check if it actually finds the end. Answer: probably not.
-        #     print(event.end)
-        #     if isinstance(event.end, datetime.datetime):
-        #         admission_ranges.add((event.time, event.end))
-        #     else:
-        #         admission_ranges.add((event.time, datetime.datetime.fromisoformat(event.end)))
 
 class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
     def __init__(self, time_after_admission: datetime.timedelta):
@@ -82,7 +76,6 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
     def label(self, subject: meds_reader.Subject) -> List[meds.Label]:
 
         admission_ranges, death_times = collect_stays(subject, END_TIMES_INCLUDED, VERBOSE)
-
         if len(death_times) not in [0, 1]:
             print(f"Warning: found {len(death_times)} death events in subject: {subject.subject_id}")
 
@@ -101,7 +94,9 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
             if prediction_time >= death_time:
                 print(f"Warning: prediction time {prediction_time} is after death time {death_time} for subject {subject.subject_id}")
                 continue
-
+            if death_time > admission_end:
+                print(f"Warning: death time {death_time} is before prediction time {prediction_time} for subject {subject.subject_id}")
+                continue
             is_death = death_time < admission_end
             labels.append(
                 meds.Label(subject_id=subject.subject_id, prediction_time=prediction_time, boolean_value=is_death))
