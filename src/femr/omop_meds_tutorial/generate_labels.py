@@ -26,35 +26,53 @@ ADMISSION_EVENTS = ["Visit//IP//start", "Visit//ERIP//start", "Visit//ER//start"
 DISCHARGE_EVENTS = ["Visit//IP//end", "Visit//ERIP//end", "Visit//ER//end",
                     "CMS Place of Service//20//end", "CMS Place of Service//15//end"]
 ADMISSION_EVENTS_OUTPATIENT = ["Visit//OP//start", "CMS Place of Service//22//start"]
+END_TIMES_INCLUDED=False
 
-
-class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
-    def __init__(self, time_after_admission: datetime.timedelta):
-        self.time_after_admission = time_after_admission
-
-    def label(self, subject: meds_reader.Subject) -> List[meds.Label]:
-        admission_ranges = set()
-        death_times = set()
-        admission_events =[]
-        discharge_events = []
-        latest_admission = None
+def collect_stays(subject, end_times_included=False, verbose=False):
+    admission_ranges = set()
+    death_times = set()
+    latest_admission = None
+    if not end_times_included:
         for event in subject.events:
             if event.code in ADMISSION_EVENTS:
                 latest_admission = event
             if event.code in DISCHARGE_EVENTS:
                 if latest_admission is not None and latest_admission.time < event.time:
                     admission_ranges.add((latest_admission.time, event.time))
-                    print(f"Found admission for subject {subject.subject_id} from {latest_admission.time} to {event.time} "
-                          f"with admission event {latest_admission.code} and discharge event {event.code}")
-            # if event.code in ADMISSION_EVENTS and event.end is not None:
-            #     #TODO: check if it actually finds the end. Answer: probably not.
-            #     print(event.end)
-            #     if isinstance(event.end, datetime.datetime):
-            #         admission_ranges.add((event.time, event.end))
-            #     else:
-            #         admission_ranges.add((event.time, datetime.datetime.fromisoformat(event.end)))
+                    if verbose:
+                        print(
+                            f"Found admission for subject {subject.subject_id} from {latest_admission.time} to {event.time} "
+                            f"with admission event {latest_admission.code} and discharge event {event.code}")
             if event.code == meds.death_code:
                 death_times.add(event.time)
+                if verbose:
+                    print(f"Found death for subject {subject.subject_id} at {event.time}")
+    else:
+        for event in subject.events:
+            if event.code in ADMISSION_EVENTS and event.end is not None:
+                if isinstance(event.end, datetime.datetime):
+                    admission_ranges.add((event.time, event.end))
+                else:
+                    admission_ranges.add((event.time, datetime.datetime.fromisoformat(event.end)))
+            if event.code == meds.death_code:
+                death_times.add(event.time)
+
+    return admission_ranges, death_times
+        # if event.code in ADMISSION_EVENTS and event.end is not None:
+        #     #TODO: check if it actually finds the end. Answer: probably not.
+        #     print(event.end)
+        #     if isinstance(event.end, datetime.datetime):
+        #         admission_ranges.add((event.time, event.end))
+        #     else:
+        #         admission_ranges.add((event.time, datetime.datetime.fromisoformat(event.end)))
+
+class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
+    def __init__(self, time_after_admission: datetime.timedelta):
+        self.time_after_admission = time_after_admission
+
+    def label(self, subject: meds_reader.Subject) -> List[meds.Label]:
+
+        admission_ranges, death_times = collect_stays(subject, END_TIMES_INCLUDED)
 
         if len(death_times) not in [0, 1]:
             print(f"Warning: found {len(death_times)} death events in subject: {subject.subject_id}")
@@ -81,6 +99,8 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
         return labels
 
 
+
+
 class OmopLongAdmissionLabeler(femr.labelers.Labeler):
     def __init__(self, time_after_admission: datetime.timedelta, admission_length: datetime.timedelta):
         self.time_after_admission = time_after_admission
@@ -89,13 +109,13 @@ class OmopLongAdmissionLabeler(femr.labelers.Labeler):
     def label(self, subject: meds_reader.Subject) -> List[meds.Label]:
         admission_ranges = set()
 
-        for event in subject.events:
-            if event.code in ADMISSION_EVENTS and event.end is not None:
-                if isinstance(event.end, datetime.datetime):
-                    admission_ranges.add((event.time, event.end))
-                else:
-                    admission_ranges.add((event.time, datetime.datetime.fromisoformat(event.end)))
-
+        # for event in subject.events:
+        #     if event.code in ADMISSION_EVENTS and event.end is not None:
+        #         if isinstance(event.end, datetime.datetime):
+        #             admission_ranges.add((event.time, event.end))
+        #         else:
+        #             admission_ranges.add((event.time, datetime.datetime.fromisoformat(event.end)))
+        collect_stays(subject, end_times_included=END_TIMES_INCLUDED, verbose=False)
         labels = []
         for (admission_start, admission_end) in admission_ranges:
             prediction_time = admission_start + self.time_after_admission
@@ -134,6 +154,7 @@ def create_omop_meds_tutorial_arg_parser():
     )
     parser.add_argument("--num_threads", dest="num_threads", type=int, default=6)
     parser.add_argument("--overwrite", dest="overwrite", action="store_true", default=False)
+    parser.add_argument("--verbose", dest="overwrite", action="store_true", default=False)
     return parser
 
 
