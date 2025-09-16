@@ -87,7 +87,7 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
                 prediction_time = admission_start + self.time_after_admission
                 labels.append(
                     meds.Label(subject_id=subject.subject_id, prediction_time=prediction_time, boolean_value=False))
-
+            return labels
         for (admission_start, admission_end) in admission_ranges:
             prediction_time = admission_start + self.time_after_admission
             if prediction_time >= admission_end:
