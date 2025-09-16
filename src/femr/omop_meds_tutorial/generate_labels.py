@@ -76,13 +76,12 @@ def find_last_event(subject, event_codes=None, horizon_min = datetime.timedelta(
     event_count = 0
     for event in subject.events:
         event_count += 1
-        if event.code in event_codes:
-            if event.code == meds.death_code:
-                death_event = event
-            if latest_event and event.time > latest_event.time:
-                if death_event and event.time > death_event.time + horizon_min:
-                    continue
-                latest_event = event
+        if event.code == meds.death_code:
+            death_event = event
+        if latest_event and event.time > latest_event.time:
+            if death_event and event.time > death_event.time + horizon_min:
+                continue
+            latest_event = event
 
     return latest_event, death_event, event_count
 
