@@ -87,9 +87,10 @@ def find_last_event(subject, event_codes=None, horizon_min = datetime.timedelta(
         if event.code == meds.death_code:
             death_event = event
         if event.time is not None and event.time > latest_event.time:
-            if death_event and event.time > death_event.time + horizon_min:
+            if death_event and event.time > (death_event.time - horizon_min):
                 continue
-            latest_event = event
+            else:
+                latest_event = event
 
     return latest_event, death_event, event_count
 
@@ -112,8 +113,9 @@ class OmopMortalityFromLastEventLabeler(femr.labelers.Labeler):
         if death_time and death_time > datetime.datetime.now():
             # print(f"Warning: found a death time in the future for subject {subject.subject_id} at {death_time}")
             return labels
-
-
+        if last_event_time > death_time:
+            print(f"Warning: found a last event time after death time for subject {subject.subject_id} at {last_event_time} > {death_time}")
+            return labels
         if death_time is None:
             # death_time = datetime.datetime(9999, 1, 1)  # Very far in the future
             labels.append(meds.Label(subject_id=subject.subject_id, prediction_time=last_event_time, boolean_value=False))
