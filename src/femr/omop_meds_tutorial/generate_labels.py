@@ -83,6 +83,13 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
         if len(death_times) == 1:
             death_time = list(death_times)[0]
         else:
+            death_time = None
+
+        if death_time > datetime.datetime.now():
+            print(f"Warning: found a death time in the future for subject {subject.subject_id} at {death_time}")
+            death_time = None
+
+        if death_time is None:
             # death_time = datetime.datetime(9999, 1, 1)  # Very far in the future
             for (admission_start, admission_end) in admission_ranges:
                 prediction_time = admission_start + self.time_after_admission
@@ -90,6 +97,9 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
                     meds.Label(subject_id=subject.subject_id, prediction_time=prediction_time, boolean_value=False))
             return labels
         death_recorded = False
+
+            # print(f"Warning: found a death time in the future for subject {subject.subject_id} at {death_time}")
+
         for (admission_start, admission_end) in admission_ranges:
             prediction_time = admission_start + self.time_after_admission
             # Todo: check if we need minimum stay length
