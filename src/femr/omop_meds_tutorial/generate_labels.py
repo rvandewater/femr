@@ -74,7 +74,7 @@ def find_last_event(subject, event_codes=None, horizon_min = datetime.timedelta(
     death_event = None
     event_count = 0
     # Find the first event with a time
-
+    latest_event = subject.events[0]
     while latest_event.time is None:
         latest_event = subject.events[event_count]
         event_count += 1
