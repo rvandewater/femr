@@ -45,10 +45,10 @@ def collect_stays(subject, end_times_included=False, verbose=False):
                     latest_time = max(possible_admissions)
                     latest_admission = admission_dict.pop(latest_time)
                     admission_ranges.add((latest_admission.time, event.time))
-                    if verbose:
-                        print(
-                            f"Matched admission for subject {subject.subject_id} from {latest_admission.time} to {event.time} "
-                            f"with admission event {latest_admission.code} and discharge event {event.code}")
+                    # if verbose:
+                    print(
+                        f"Matched admission for subject {subject.subject_id} from {latest_admission.time} to {event.time} "
+                        f"with admission event {latest_admission.code} and discharge event {event.code}")
                         # print(
                         #     f"Found admission for subject {subject.subject_id} from {latest_admission.time} to {event.time} "
                         #     f"with admission event {latest_admission.code} and discharge event {event.code}")
