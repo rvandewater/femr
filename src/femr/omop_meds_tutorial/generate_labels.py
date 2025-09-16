@@ -110,17 +110,18 @@ class OmopMortalityFromLastEventLabeler(femr.labelers.Labeler):
         death_time = death_event.time if death_event else None
         last_event_time = last_event.time if last_event else None
         if death_time and death_time > datetime.datetime.now():
-            print(f"Warning: found a death time in the future for subject {subject.subject_id} at {death_time}")
+            # print(f"Warning: found a death time in the future for subject {subject.subject_id} at {death_time}")
             return labels
 
 
         if death_time is None:
             # death_time = datetime.datetime(9999, 1, 1)  # Very far in the future
-                labels.append(meds.Label(subject_id=subject.subject_id, prediction_time=last_event_time, boolean_value=False))
+            labels.append(meds.Label(subject_id=subject.subject_id, prediction_time=last_event_time, boolean_value=False))
         elif last_event.time + self.horizon_max > death_time:
             labels.append(meds.Label(subject_id=subject.subject_id, prediction_time=last_event_time, boolean_value=True))
         else:
-            print(f"Warning: subject {subject.subject_id} has a death time {death_time} but it was {death_time-last_event} to far away")
+            # We do not label because we assume this is a mistake
+            print(f"Warning: subject {subject.subject_id} has a death time {death_time} but it was {death_time-last_event} later")
         return labels
 
 
