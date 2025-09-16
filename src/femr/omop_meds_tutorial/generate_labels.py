@@ -56,7 +56,7 @@ def collect_stays(subject, end_times_included=False, verbose=False):
                 death_times.add(event.time)
                 # if verbose:
                 print(f"Found death for subject {subject.subject_id} at {event.time} time since admission "
-                      f"{event.time - max(possible_admissions)}")
+                      f"{event.time - max(admission_dict.keys())}")
     else:
         for event in subject.events:
             if event.code in ADMISSION_EVENTS and event.end is not None:
@@ -94,7 +94,7 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
             if prediction_time >= death_time:
                 print(f"Warning: prediction time {prediction_time} is after death time {death_time} for subject {subject.subject_id}")
                 continue
-            if death_time > admission_end:
+            if death_time > admission_end and death_time < datetime.datetime(9999, 1, 1):
                 print(f"Warning: death time {death_time} is before prediction time {prediction_time} for subject {subject.subject_id}")
                 continue
             is_death = death_time < admission_end
