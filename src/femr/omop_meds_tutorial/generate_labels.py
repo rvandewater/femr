@@ -90,8 +90,8 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
             return labels
         for (admission_start, admission_end) in admission_ranges:
             prediction_time = admission_start + self.time_after_admission
-            if prediction_time >= admission_end:
-                continue
+            # if prediction_time >= admission_end:
+            #     continue
 
             if prediction_time >= death_time:
                 print(f"Warning: prediction time {prediction_time} is after death time {death_time} for subject {subject.subject_id}")
