@@ -70,6 +70,54 @@ def collect_stays(subject, end_times_included=False, verbose=False):
 
     return admission_ranges, death_times
 
+def find_last_event(subject, event_codes=None, horizon_min = datetime.timedelta(hours=24), verbose=False,):
+    latest_event = None
+    death_event = None
+    event_count = 0
+    for event in subject.events:
+        event_count += 1
+        if event.code in event_codes:
+            if event.code == meds.death_code:
+                death_event = event
+            if latest_event and event.time > latest_event.time:
+                if death_event and event.time > death_event.time + horizon_min:
+                    continue
+                latest_event = event
+
+    return latest_event, death_event, event_count
+
+class OmopMortalityFromLastEventLabeler(femr.labelers.Labeler):
+    def __init__(self, time_after_admission: datetime.timedelta, horizon_min: datetime.timedelta = datetime.timedelta(hours=24),
+                 horizon_max: datetime.timedelta = datetime.timedelta(days=30)):
+        self.time_after_admission = time_after_admission
+        self.min_total_events = 30
+        # Last event is allowed to be before horizon min
+        self.horizon_min = horizon_min
+        # Last event must be after horizon max
+        self.horizon_max = horizon_max
+
+    def label(self, subject: meds_reader.Subject) -> List[meds.Label]:
+        labels = []
+        last_event, death_event, event_count = find_last_event(subject,horizon_min=self.horizon_min,verbose=VERBOSE)
+        if event_count < self.min_total_events or last_event is None:
+            return labels
+        death_time = death_event.time if death_event else None
+        last_event_time = last_event.time if last_event else None
+        if death_event and death_time > datetime.datetime.now():
+            print(f"Warning: found a death time in the future for subject {subject.subject_id} at {death_time}")
+            return labels
+
+
+        if death_time is None:
+            # death_time = datetime.datetime(9999, 1, 1)  # Very far in the future
+                labels.append(meds.Label(subject_id=subject.subject_id, prediction_time=last_event_time, boolean_value=False))
+        elif last_event.time + self.horizon_max > death_time:
+            labels.append(meds.Label(subject_id=subject.subject_id, prediction_time=last_event_time, boolean_value=True))
+        else:
+            print(f"Warning: subject {subject.subject_id} has a death time {death_time} but it was {death_time-last_event} to far away")
+        return labels
+
+
 class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
     def __init__(self, time_after_admission: datetime.timedelta):
         self.time_after_admission = time_after_admission
@@ -161,7 +209,7 @@ class OmopLongAdmissionLabeler(femr.labelers.Labeler):
 
 labelers: Mapping[str, femr.labelers.Labeler] = {
     # 'death': OmopInpatientMortalityLabeler(time_after_admission=datetime.timedelta(hours=48)),
-    'death': OmopInpatientMortalityLabeler(time_after_admission=datetime.timedelta(days=30)),
+    'death': OmopMortalityFromLastEventLabeler(), #OmopInpatientMortalityLabeler(time_after_admission=datetime.timedelta(days=30)),
     'long_los': OmopLongAdmissionLabeler(time_after_admission=datetime.timedelta(hours=48),
                                          admission_length=datetime.timedelta(days=7)),
 }
