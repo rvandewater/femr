@@ -55,8 +55,8 @@ def collect_stays(subject, end_times_included=False, verbose=False):
             if event.code == meds.death_code:
                 death_times.add(event.time)
                 # if verbose:
-                print(f"Found death for subject {subject.subject_id} at {event.time} time since admission "
-                      f"{event.time - max(admission_dict.keys())}")
+                # print(f"Found death for subject {subject.subject_id} at {event.time} time since admission "
+                #       f"{event.time - max(admission_dict.keys())}")
     else:
         for event in subject.events:
             if event.code in ADMISSION_EVENTS and event.end is not None:
