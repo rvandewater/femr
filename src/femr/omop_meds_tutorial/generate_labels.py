@@ -16,7 +16,7 @@ from pathlib import Path
 
 LABEL_NAMES = [
     "death",
-    "long_los",
+    #"long_los",
 ]
 # LABEL_NAMES = ['long_los', '30d']
 # ADMISSION_EVENTS = ["Visit/IP", "Visit/ERIP", "Visit/ER", "CMS Place of Service/51", "CMS Place of Service/61"]
@@ -91,6 +91,7 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
                 continue
 
             if prediction_time >= death_time:
+                print(f"Warning: prediction time {prediction_time} is after death time {death_time} for subject {subject.subject_id}")
                 continue
 
             is_death = death_time < admission_end
