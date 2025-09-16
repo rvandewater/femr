@@ -22,9 +22,10 @@ LABEL_NAMES = [
 # ADMISSION_EVENTS = ["Visit/IP", "Visit/ERIP", "Visit/ER", "CMS Place of Service/51", "CMS Place of Service/61"]
 # MEDS transforms omop etl
 ADMISSION_EVENTS = ["Visit//IP//start", "Visit//ERIP//start", "Visit//ER//start",
-                    "CMS Place of Service//20//start", "CMS Place of Service//15//start"]
+                    "CMS Place of Service//20//start", "CMS Place of Service//15//start", "CMS Place of Service//02//start"]
+
 DISCHARGE_EVENTS = ["Visit//IP//end", "Visit//ERIP//end", "Visit//ER//end",
-                    "CMS Place of Service//20//end", "CMS Place of Service//15//end"]
+                    "CMS Place of Service//20//end", "CMS Place of Service//15//end", "CMS Place of Service//02//end"]
 ADMISSION_EVENTS_OUTPATIENT = ["Visit//OP//start", "CMS Place of Service//22//start"]
 END_TIMES_INCLUDED=False
 VERBOSE=False
@@ -107,6 +108,8 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
                 # print(f"Labeling subject {subject.subject_id} as death at prediction time {prediction_time} within {death_time-admission_start} with death time {death_time} and admission end {admission_end}")
                 # if death_time > admission_end:
                 # print(f"warning for subject {subject.subject_id} death is : {death_time-admission_end} after discharge")
+            elif admission_start > death_time:
+                print(f"Warning: admission start {admission_start} is after death time {death_time} for subject {subject.subject_id}")
             labels.append(
                 meds.Label(subject_id=subject.subject_id, prediction_time=prediction_time, boolean_value=is_death))
         if not death_recorded:
