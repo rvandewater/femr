@@ -34,16 +34,24 @@ def collect_stays(subject, end_times_included=False, verbose=False):
     death_times = set()
     latest_admission = None
     if not end_times_included:
+        admission_dict = {}
         for event in subject.events:
             if event.code in ADMISSION_EVENTS:
+                admission_dict[event.time] = event
                 latest_admission = event
             if event.code in DISCHARGE_EVENTS:
-                if latest_admission is not None and latest_admission.time < event.time:
+                possible_admissions = [t for t in admission_dict if t < event.time]
+                if possible_admissions:
+                    latest_time = max(possible_admissions)
+                    latest_admission = admission_dict.pop(latest_time)
                     admission_ranges.add((latest_admission.time, event.time))
                     if verbose:
                         print(
-                            f"Found admission for subject {subject.subject_id} from {latest_admission.time} to {event.time} "
+                            f"Matched admission for subject {subject.subject_id} from {latest_admission.time} to {event.time} "
                             f"with admission event {latest_admission.code} and discharge event {event.code}")
+                        # print(
+                        #     f"Found admission for subject {subject.subject_id} from {latest_admission.time} to {event.time} "
+                        #     f"with admission event {latest_admission.code} and discharge event {event.code}")
             if event.code == meds.death_code:
                 death_times.add(event.time)
                 if verbose:
