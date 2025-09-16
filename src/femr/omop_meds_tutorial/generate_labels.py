@@ -88,6 +88,7 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
                 labels.append(
                     meds.Label(subject_id=subject.subject_id, prediction_time=prediction_time, boolean_value=False))
             return labels
+        death_recorded = False
         for (admission_start, admission_end) in admission_ranges:
             prediction_time = admission_start + self.time_after_admission
             # Todo: check if we need minimum stay length
@@ -102,11 +103,14 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
                 # continue
             is_death = death_time < prediction_time #< admission_end
             if is_death:
-                print(f"Labeling subject {subject.subject_id} as death at prediction time {prediction_time} within {death_time-admission_start} with death time {death_time} and admission end {admission_end}")
+                death_recorded = True
+                # print(f"Labeling subject {subject.subject_id} as death at prediction time {prediction_time} within {death_time-admission_start} with death time {death_time} and admission end {admission_end}")
                 if death_time > admission_end:
-                    print(f"warning for subject {subject.subject_id} death is : {death_time-admission_end} after discharge")
+                    # print(f"warning for subject {subject.subject_id} death is : {death_time-admission_end} after discharge")
             labels.append(
                 meds.Label(subject_id=subject.subject_id, prediction_time=prediction_time, boolean_value=is_death))
+        if not death_recorded:
+            print(f"Warning: subject {subject.subject_id} has a death time {death_time} but it was not recorded in any outcome")
 
         return labels
 
