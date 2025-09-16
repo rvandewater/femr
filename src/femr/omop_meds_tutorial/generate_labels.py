@@ -94,9 +94,9 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
             # if prediction_time >= admission_end:
             #     continue
 
-            if prediction_time >= death_time:
-                print(f"Warning: prediction time {prediction_time} is after death time {death_time} for subject {subject.subject_id}")
-                continue
+            # if prediction_time >= death_time:
+            #     print(f"Warning: prediction time {prediction_time} is after death time {death_time} for subject {subject.subject_id}")
+            #     continue
             # if death_time > admission_end:
             #     print(f"Warning: death time {death_time} is after prediction time {prediction_time} for subject {subject.subject_id}")
                 # continue
