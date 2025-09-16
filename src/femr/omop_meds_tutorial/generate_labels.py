@@ -105,8 +105,8 @@ class OmopInpatientMortalityLabeler(femr.labelers.Labeler):
             if is_death:
                 death_recorded = True
                 # print(f"Labeling subject {subject.subject_id} as death at prediction time {prediction_time} within {death_time-admission_start} with death time {death_time} and admission end {admission_end}")
-                if death_time > admission_end:
-                    # print(f"warning for subject {subject.subject_id} death is : {death_time-admission_end} after discharge")
+                # if death_time > admission_end:
+                # print(f"warning for subject {subject.subject_id} death is : {death_time-admission_end} after discharge")
             labels.append(
                 meds.Label(subject_id=subject.subject_id, prediction_time=prediction_time, boolean_value=is_death))
         if not death_recorded:
