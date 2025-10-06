@@ -161,6 +161,10 @@ def main():
     training_args.load_best_model_at_end = True
     training_args.metric_for_best_model = "eval_loss"
     training_args.greater_is_better = False
+    # Before creating the trainer, modify training_args
+    training_args.per_device_train_batch_size = 1
+    training_args.per_device_eval_batch_size = 1
+    training_args.dataloader_num_workers = 0  # Set to 0 to avoid multiprocessing issues
     trainer = transformers.Trainer(
         model=model,
         data_collator=processor.collate,
