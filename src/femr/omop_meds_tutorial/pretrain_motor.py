@@ -76,6 +76,8 @@ def parse_arguments()-> (
 
 def main():
     motor_args, training_args = parse_arguments()
+    print(f"motor args: {motor_args}")
+    print(f"training args: {training_args}")
     pretraining_data = pathlib.Path(motor_args.pretraining_data)
 
     ontology_path = pretraining_data / 'ontology.pkl'
@@ -152,13 +154,18 @@ def main():
     #     metric_for_best_model="eval_loss",
     #     greater_is_better=False,
     # )
-
+    training_args.evaluation_strategy = IntervalStrategy.EPOCH
+    training_args.save_strategy = IntervalStrategy.EPOCH
+    training_args.load_best_model_at_end = True
+    training_args.metric_for_best_model = "eval_loss"
+    training_args.greater_is_better = False
     trainer = transformers.Trainer(
         model=model,
         data_collator=processor.collate,
         train_dataset=train_batches,
         eval_dataset=val_batches,
         args=training_args,
+
         callbacks=[CustomEarlyStoppingCallback(early_stopping_patience=1, early_stopping_threshold=0.001)],
     )
     train_result = trainer.train(resume_from_checkpoint=motor_args.checkpoint_dir)
