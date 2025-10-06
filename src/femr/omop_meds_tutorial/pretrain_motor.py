@@ -162,9 +162,21 @@ def main():
     training_args.metric_for_best_model = "eval_loss"
     training_args.greater_is_better = False
     # Before creating the trainer, modify training_args
-    training_args.per_device_train_batch_size = 1
+    # training_args.per_device_train_batch_size = 1
+    # training_args.per_device_eval_batch_size = 1
+    # training_args.dataloader_num_workers = 0  # Set to 0 to avoid multiprocessing issues
+    # Parallelization settings
+    training_args.per_device_train_batch_size = 1  # Required by collate function
     training_args.per_device_eval_batch_size = 1
-    training_args.dataloader_num_workers = 0  # Set to 0 to avoid multiprocessing issues
+    training_args.gradient_accumulation_steps = 16  # Simulate batch size of 16
+    training_args.dataloader_num_workers = 8  # Parallel data loading (adjust based on CPU cores)
+    training_args.dataloader_prefetch_factor = 2  # Prefetch batches
+    training_args.dataloader_pin_memory = True  # Faster data transfer to GPU
+
+    # Optional: enable torch.compile for faster forward/backward passes (PyTorch 2.0+)
+    if hasattr(torch, 'compile'):
+        training_args.torch_compile = True
+        training_args.torch_compile_backend = "inductor"
     trainer = transformers.Trainer(
         model=model,
         data_collator=processor.collate,
