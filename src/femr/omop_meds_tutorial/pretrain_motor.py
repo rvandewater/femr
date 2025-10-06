@@ -155,6 +155,7 @@ def main():
     #     greater_is_better=False,
     # )
     training_args.evaluation_strategy = IntervalStrategy.EPOCH
+    training_args.eval_strategy=IntervalStrategy.EPOCH
     training_args.save_strategy = IntervalStrategy.EPOCH
     training_args.load_best_model_at_end = True
     training_args.metric_for_best_model = "eval_loss"
