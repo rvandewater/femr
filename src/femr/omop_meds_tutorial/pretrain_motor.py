@@ -61,6 +61,11 @@ def parse_arguments()-> (
 ):
     parser = HfArgumentParser((MotorArguments, TrainingArguments))
     motor_args, training_args = parser.parse_args_into_dataclasses()
+    # Ensure required parameters for EarlyStoppingCallback are set
+    training_args.load_best_model_at_end = True
+    training_args.metric_for_best_model = "eval_loss"
+    training_args.greater_is_better = False
+
     return motor_args, training_args
 
 
