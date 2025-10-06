@@ -1,7 +1,7 @@
 
 import dataclasses
 from typing import Optional, Tuple
-from transformers import TrainingArguments, HfArgumentParser
+from transformers import TrainingArguments, HfArgumentParser, IntervalStrategy
 
 import numpy as np
 import transformers
@@ -67,8 +67,8 @@ def parse_arguments()-> (
     training_args.greater_is_better = False
 
     # Ensure evaluation_strategy and save_strategy match
-    training_args.evaluation_strategy = "epoch"
-    training_args.save_strategy = "epoch"
+    training_args.save_strategy = IntervalStrategy.EPOCH
+    training_args.evaluation_strategy = IntervalStrategy.EPOCH
 
 
     return motor_args, training_args
