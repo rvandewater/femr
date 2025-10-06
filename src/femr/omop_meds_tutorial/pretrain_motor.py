@@ -66,6 +66,11 @@ def parse_arguments()-> (
     training_args.metric_for_best_model = "eval_loss"
     training_args.greater_is_better = False
 
+    # Ensure evaluation_strategy and save_strategy match
+    training_args.evaluation_strategy = "epoch"
+    training_args.save_strategy = "epoch"
+
+
     return motor_args, training_args
 
 
