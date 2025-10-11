@@ -69,7 +69,7 @@ def parse_arguments()-> (
     # Ensure evaluation_strategy and save_strategy match
     training_args.save_strategy = IntervalStrategy.EPOCH
     training_args.evaluation_strategy = IntervalStrategy.EPOCH
-
+    training_args.remove_unused_columns=False
 
     return motor_args, training_args
 
