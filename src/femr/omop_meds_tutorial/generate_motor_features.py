@@ -64,6 +64,7 @@ def main():
     args = create_arg_parser().parse_args()
     subject_splits_path = args.meds_reader / "metadata" / "subject_splits.parquet"
     subject_splits = pd.read_parquet(subject_splits_path)
+    available_subjects = set(subject_splits['subject_id'].tolist())
     with meds_reader.SubjectDatabase(args.meds_reader, num_threads=6) as database:
         pretraining_data = pathlib.Path(args.pretraining_data)
         ontology_path = pretraining_data / 'ontology.pkl'
@@ -111,7 +112,8 @@ def main():
             labels = pd.read_parquet(
                 pretraining_data / "labels" / (label_name + '.parquet')
             )
-            available_subjects = [subject for subject in database]
+
+
             labels = labels[labels['subject_id'].isin(available_subjects)]
             print(f"Filtered to {len(labels)} labels with subjects in database")
 
@@ -123,6 +125,14 @@ def main():
                 )
                 for label in labels.to_dict(orient="records")
             ]
+            validated_labels = []
+            for label in labels:
+                if typed_labels["subject_id"] in database:
+                    validated_labels.append(label)
+                else:
+                    print(f"Subject {label['subject_id']} not in database, skipping label")
+            print(f"Validated labels: {len(validated_labels)} out of {len(labels)}")
+            typed_labels = validated_labels
             # total_flops = femr.models.transformer.TotalFlops()
             start_time: datetime.datetime = datetime.datetime.now()
             features = femr.models.transformer.compute_features(
