@@ -460,6 +460,14 @@ def compute_features(
          -  "subject_ids" and "feature_times" define the subject and time each feature refers to
          -  "features" provides the representations at each subject id and feature time
     """
+    labels_validated = []
+    for label in labels:
+        if not label["subject_id"] in db:
+            print("Warning: label for subject id " + str(label["subject_id"]) + " not in database")
+        else:
+            labels_validated.append(label)
+    labels = labels_validated
+
     task = femr.models.tasks.LabeledSubjectTask(labels, observation_window)
 
     model = femr.models.transformer.FEMRModel.from_pretrained(model_path, task_config=task.get_task_config())
