@@ -62,7 +62,7 @@ def get_motor_features_name(label_name: str, observation_window: Optional[int] =
 
 def main():
     args = create_arg_parser().parse_args()
-    subject_splits_path = args.meds_reader / "metadata" / "subject_splits.parquet"
+    subject_splits_path = args.meds_reader + "/metadata/subject_splits.parquet"
     subject_splits = pd.read_parquet(subject_splits_path)
     print(f"Starting with {len(subject_splits)} subjects from splits", flush=True)
     available_subjects = set(subject_splits['subject_id'].tolist())
