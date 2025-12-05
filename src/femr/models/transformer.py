@@ -478,7 +478,7 @@ def compute_features(
 
     if device:
         model = model.to(device)
-
+    print(f"Using device: {device}", flush=True)
     cpu_device = torch.device("cpu")
 
     batches = processor.convert_dataset(
@@ -492,10 +492,11 @@ def compute_features(
     all_subject_ids = []
     all_feature_times = []
     all_representations = []
-
+    print("Starting feature computation", flush=True)
     with torch.no_grad():
         with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
             for batch in tqdm(loader, desc="Computing features", unit="batch"):
+                print("Processing batch", flush=True)
                 if device:
                     batch = to_device(batch, device)
 
