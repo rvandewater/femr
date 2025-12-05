@@ -66,7 +66,7 @@ def main():
     subject_splits = pd.read_parquet(subject_splits_path)
     print(f"Starting with {len(subject_splits)} subjects from splits", flush=True)
     available_subjects = set(subject_splits['subject_id'].tolist())
-    with meds_reader.SubjectDatabase(args.meds_reader, num_threads=6) as database:
+    with meds_reader.SubjectDatabase(args.meds_reader, num_threads=args.num_proc) as database:
         pretraining_data = pathlib.Path(args.pretraining_data)
         ontology_path = pretraining_data / 'ontology.pkl'
 
@@ -116,7 +116,9 @@ def main():
 
             print(f"Original number of labels: {len(labels)}", flush=True)
             labels = labels[labels['subject_id'].isin(available_subjects)]
-            print(f"Filtered to {len(labels)} labels with subjects in database", flush=True)
+            filtered_out_subjects = set(labels['subject_id']) - available_subjects
+
+            print(f"Filtered to {len(labels)} labels with subjects in database, filtered out {filtered_out_subjects} ", flush=True)
 
             typed_labels = [
                 meds.Label(
