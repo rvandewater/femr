@@ -116,7 +116,7 @@ def main():
 
 
             labels = labels[labels['subject_id'].isin(available_subjects)]
-            print(f"Filtered to {len(labels)} labels with subjects in database")
+            print(f"Filtered to {len(labels)} labels with subjects in database", flush=True)
 
             typed_labels = [
                 meds.Label(
@@ -132,7 +132,7 @@ def main():
                     validated_labels.append(label)
                 else:
                     print(f"Subject {label['subject_id']} not in database, skipping label")
-            print(f"Validated labels: {len(validated_labels)} out of {len(labels)}")
+            print(f"Validated labels: {len(validated_labels)} out of {len(labels)}", flush=True)
             typed_labels = validated_labels
             # total_flops = femr.models.transformer.TotalFlops()
             start_time: datetime.datetime = datetime.datetime.now()
