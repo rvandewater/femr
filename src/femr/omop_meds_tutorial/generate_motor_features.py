@@ -114,7 +114,7 @@ def main():
                 pretraining_data / "labels" / (label_name + '.parquet')
             )
 
-
+            print(f"Original number of labels: {len(labels)}", flush=True)
             labels = labels[labels['subject_id'].isin(available_subjects)]
             print(f"Filtered to {len(labels)} labels with subjects in database", flush=True)
 
@@ -126,14 +126,14 @@ def main():
                 )
                 for label in labels.to_dict(orient="records")
             ]
-            validated_labels = []
-            for label in labels:
-                if typed_labels["subject_id"] in database:
-                    validated_labels.append(label)
-                else:
-                    print(f"Subject {label['subject_id']} not in database, skipping label")
-            print(f"Validated labels: {len(validated_labels)} out of {len(labels)}", flush=True)
-            typed_labels = validated_labels
+            # validated_labels = []
+            # for label in labels:
+            #     if typed_labels["subject_id"] in database:
+            #         validated_labels.append(label)
+            #     else:
+            #         print(f"Subject {label['subject_id']} not in database, skipping label")
+            # print(f"Validated labels: {len(validated_labels)} out of {len(labels)}", flush=True)
+            # typed_labels = validated_labels
             # total_flops = femr.models.transformer.TotalFlops()
             start_time: datetime.datetime = datetime.datetime.now()
             features = femr.models.transformer.compute_features(
