@@ -45,6 +45,11 @@ def create_arg_parser():
         default=None,
         help="The observation window for extracting features",
     )
+    args.add_argument(
+        "--cohort_name",
+        dest="cohort_name",
+        type=str,
+        default=None, help="The name to give the resulting files")
     return args
 
 
@@ -81,10 +86,16 @@ def main():
         labels = LABEL_NAMES
         if args.cohort_dir is not None:
             if os.path.isdir(args.cohort_dir):
-                label_name = os.path.basename(os.path.normpath(args.cohort_dir))
+                if args.cohort_name is not None:
+                    label_name = str(args.cohort_name)
+                else:
+                    label_name = os.path.basename(os.path.normpath(args.cohort_dir))
                 cohort = read_recursive_parquet(args.cohort_dir)
             else:
-                label_name = os.path.basename(os.path.splitext(args.cohort_dir)[0])
+                if args.cohort_name is not None:
+                    label_name = str(args.cohort_name)
+                else:
+                    label_name = os.path.basename(os.path.splitext(args.cohort_dir)[0])
                 file_extension = os.path.splitext(args.cohort_dir)[1]
                 if file_extension.lower() == ".parquet":
                     cohort = pd.read_parquet(args.cohort_dir)
@@ -102,6 +113,7 @@ def main():
             labels = [label_name]
 
         for label_name in labels:
+            print(f"Processing label: {label_name}", flush=True)
             motor_features_name = get_motor_features_name(label_name, args.observation_window)
             feature_output_path = features_path / f"{motor_features_name}.pkl"
             training_metrics_file = flops_path / f"{motor_features_name}.json"
