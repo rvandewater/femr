@@ -12,8 +12,8 @@ import pickle
 import meds
 import pathlib
 import torch
-
-from src.femr.omop_meds_tutorial.prepare_motor import subject_splits_path
+import sys
+sys.stdout.reconfigure(line_buffering=True)
 from .generate_labels import create_omop_meds_tutorial_arg_parser, LABEL_NAMES
 
 
@@ -159,4 +159,5 @@ def main():
                 json.dump(training_metrics, output_file)
 
 if __name__ == "__main__":
+    print("Generating MOTOR features", flush=True)
     main()
