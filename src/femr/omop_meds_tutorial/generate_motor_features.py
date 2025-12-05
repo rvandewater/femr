@@ -64,7 +64,7 @@ def main():
     args = create_arg_parser().parse_args()
     subject_splits_path = args.meds_reader / "metadata" / "subject_splits.parquet"
     subject_splits = pd.read_parquet(subject_splits_path)
-    print(f"Starting with {len(subject_splits)} subjects from splits")
+    print(f"Starting with {len(subject_splits)} subjects from splits", flush=True)
     available_subjects = set(subject_splits['subject_id'].tolist())
     with meds_reader.SubjectDatabase(args.meds_reader, num_threads=6) as database:
         pretraining_data = pathlib.Path(args.pretraining_data)
