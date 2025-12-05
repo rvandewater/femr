@@ -460,13 +460,13 @@ def compute_features(
          -  "subject_ids" and "feature_times" define the subject and time each feature refers to
          -  "features" provides the representations at each subject id and feature time
     """
-    labels_validated = []
-    for label in labels:
-        if not label["subject_id"] in db:
-            print("Warning: label for subject id " + str(label["subject_id"]) + " not in database")
-        else:
-            labels_validated.append(label)
-    labels = labels_validated
+    # labels_validated = []
+    # for label in labels:
+    #     if not label["subject_id"] in db:
+    #         print("Warning: label for subject id " + str(label["subject_id"]) + " not in database")
+    #     else:
+    #         labels_validated.append(label)
+    # labels = labels_validated
 
     task = femr.models.tasks.LabeledSubjectTask(labels, observation_window)
 
@@ -495,7 +495,7 @@ def compute_features(
 
     with torch.no_grad():
         with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
-            for batch in tqdm(loader):
+            for batch in tqdm(loader, desc="Computing features", unit="batch"):
                 if device:
                     batch = to_device(batch, device)
 
