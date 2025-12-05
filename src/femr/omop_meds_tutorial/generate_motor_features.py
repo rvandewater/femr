@@ -143,7 +143,7 @@ def main():
                 model_path=str(pretraining_data / "motor_model"),
                 labels=typed_labels,
                 ontology=ontology,
-                device=torch.device('cuda'),
+                device=torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'),
                 tokens_per_batch=args.tokens_per_batch,
                 num_proc=args.num_proc,
                 observation_window=args.observation_window,
