@@ -69,6 +69,7 @@ def main():
     args = create_arg_parser().parse_args()
     subject_splits_path = args.meds_reader + "/metadata/subject_splits.parquet"
     subject_splits = pd.read_parquet(subject_splits_path)
+    cohort_name = str(args.cohort_name).replace('/', '_') if args.cohort_name else None
     print(f"Starting with {len(subject_splits)} subjects from splits", flush=True)
     available_subjects = set(subject_splits['subject_id'].tolist())
     with meds_reader.SubjectDatabase(args.meds_reader, num_threads=args.num_proc) as database:
@@ -86,14 +87,14 @@ def main():
         labels = LABEL_NAMES
         if args.cohort_dir is not None:
             if os.path.isdir(args.cohort_dir):
-                if args.cohort_name is not None:
-                    label_name = str(args.cohort_name)
+                if cohort_name is not None:
+                    label_name = cohort_name
                 else:
                     label_name = os.path.basename(os.path.normpath(args.cohort_dir))
                 cohort = read_recursive_parquet(args.cohort_dir)
             else:
-                if args.cohort_name is not None:
-                    label_name = str(args.cohort_name)
+                if cohort_name is not None:
+                    label_name = cohort_name
                 else:
                     label_name = os.path.basename(os.path.splitext(args.cohort_dir)[0])
                 file_extension = os.path.splitext(args.cohort_dir)[1]
