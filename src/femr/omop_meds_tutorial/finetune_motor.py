@@ -69,8 +69,8 @@ def main():
             if test_result_file.exists():
                 print(f"The result already existed for {label_name} at {test_result_file}, it will be skipped!")
                 continue
-            labels = pd.read_parquet(pretraining_data / "labels" / (label_name + '.parquet'))
-
+            # labels = pd.read_parquet(pretraining_data / "labels" / (label_name + '.parquet'))
+            labels = pd.read_parquet(f"{label_path}/**/*.parquet")
             motor_features_name = get_motor_features_name(label_name, args.observation_window)
             with open(pretraining_data / 'features' / f"{motor_features_name}.pkl", 'rb') as f:
                 features = pickle.load(f)
