@@ -30,17 +30,23 @@ def create_arg_parser():
         default=None,
         help="The observation window for extracting features",
     )
+    args.add_argument(
+        "--label_path",
+        dest="label_path",
+        default=pathlib.Path(args.pretraining_data) / "labels" / (args.cohort_label + '.parquet'),
+        help="The path to the labels file",
+    )
     return args
 
 
 def main():
     args = create_arg_parser().parse_args()
     pretraining_data = pathlib.Path(args.pretraining_data)
+    label_path = pathlib.Path(args.label_path)
 
 
     labels = LABEL_NAMES
     if args.cohort_label is not None:
-        label_path = pretraining_data / "labels" / (args.cohort_label + '.parquet')
         if label_path.exists():
             print(f"Using the user defined label at: {label_path}")
             labels = [args.cohort_label]
