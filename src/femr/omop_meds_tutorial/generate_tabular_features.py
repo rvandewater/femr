@@ -28,6 +28,11 @@ def create_arg_parser():
         default=None,
         help="The observation window for extracting features",
     )
+    args.add_argument(
+        "--cohort_name",
+        dest="cohort_name",
+        type=str,
+        default=None, help="The name to give the resulting files")
     return args
 
 
@@ -42,6 +47,7 @@ def get_baseline_features_name(label_name: str, observation_window: Optional[int
     return label_name + '.pkl'
 
 def get_baseline_featurizer_name(label_name: str, observation_window: Optional[int] = None) -> str:
+    label_name = label_name.replace('/', '_')
     if observation_window:
         return label_name + '_' + str(observation_window) + '_featurizer.pkl'
     return label_name + '_featurizer.pkl'
@@ -55,12 +61,20 @@ def main():
     label_path = pretraining_data / "labels"
     label_path.mkdir(exist_ok=True, parents=True)
     labels = LABEL_NAMES
+    cohort_name = str(args.cohort_name).replace('/', '_') if args.cohort_name else None
+
     if args.cohort_dir is not None:
         if os.path.isdir(args.cohort_dir):
-            label_name = os.path.basename(os.path.normpath(args.cohort_dir))
+            if cohort_name is not None:
+                label_name = cohort_name
+            else:
+                label_name = os.path.basename(os.path.normpath(args.cohort_dir))
             cohort = read_recursive_parquet(args.cohort_dir)
         else:
-            label_name = os.path.basename(os.path.splitext(args.cohort_dir)[0])
+            if cohort_name is not None:
+                label_name = cohort_name
+            else:
+                label_name = os.path.basename(os.path.splitext(args.cohort_dir)[0])
             file_extension = os.path.splitext(args.cohort_dir)[1]
             if file_extension.lower() == ".parquet":
                 cohort = pd.read_parquet(args.cohort_dir)
@@ -71,8 +85,9 @@ def main():
         # We need to cast prediction_time to datetime
         if len(cohort) > 0 and isinstance(cohort.prediction_time.iloc[0], datetime.date):
             cohort["prediction_time"] = pd.to_datetime(cohort["prediction_time"])
+
         cohort.to_parquet(
-            label_path / (label_name + '.parquet')
+            pretraining_data / "labels" / (label_name + '.parquet')
         )
         labels = [label_name]
 
