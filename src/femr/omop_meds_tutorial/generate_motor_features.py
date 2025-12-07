@@ -60,6 +60,7 @@ def read_recursive_parquet(root_dir):
 
 
 def get_motor_features_name(label_name: str, observation_window: Optional[int] = None) -> str:
+    label_name = label_name.replace('/', '_')
     if observation_window:
         return label_name + '_motor_' + str(observation_window)
     return label_name + '_motor'

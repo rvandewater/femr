@@ -33,7 +33,7 @@ def create_arg_parser():
     args.add_argument(
         "--label_path",
         dest="label_path",
-        default=pathlib.Path(args.pretraining_data) / "labels" / (args.cohort_label + '.parquet'),
+        default=None,
         help="The path to the labels file",
     )
     return args
@@ -44,7 +44,8 @@ def main():
     pretraining_data = pathlib.Path(args.pretraining_data)
     label_path = pathlib.Path(args.label_path)
 
-
+    if label_path is None:
+        label_path = pretraining_data / "labels" / (args.cohort_label + '.parquet'),
     labels = LABEL_NAMES
     if args.cohort_label is not None:
         label_path = label_path / args.cohort_label
