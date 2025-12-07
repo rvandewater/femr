@@ -41,22 +41,24 @@ def main(args):
             with open(ontology_path, 'rb') as f:
                 ontology = pickle.load(f)
         if not args.pre_split:
-            subject_splits = pd.read_parquet(subject_splits_path)
-            subject_splits = subject_splits[subject_splits.subject_id.isin(subject_ids)]
-            train_tuning_split = subject_splits[~subject_splits.split.isin(["held_out"])].subject_id.tolist()
-            test_split = subject_splits[subject_splits.split.isin(["held_out"])].subject_id.tolist()
-            main_split = femr.splits.SubjectSplit(train_tuning_split, test_split)
-            main_split.save_to_csv(str(pretraining_data_path / 'main_split.csv'))
+subject_splits_path = "/sc/arion/projects/hpims-hpi/projects/foundation_models_ehr/cohorts/meds_debug/full_omop_25_04_29/MEDS_cohort/metadata/subject_splits.parquet"
+subject_splits = pl.read_parquet(subject_splits_path)
+train_val_ids = subject_splits.filter(pl.col("split") != "held_out").select("subject_id").to_series().to_list()
+train_ids = subject_splits.filter(pl.col("split") == "train").select("subject_id").to_series().to_list()
+test_split = subject_splits.filter(pl.col("split") == "held_out").select("subject_id").to_series().to_list()
+main_split = femr.splits.SubjectSplit(train_val_ids, test_split)
+main_split.save_to_csv("/sc/arion/projects/hpims-hpi/projects/foundation_models_ehr/meds_data/25-08-01_meds_etl_base/motor_data/motor_model/" + 'main_split.csv')
 
             train_split = femr.splits.generate_hash_split(main_split.train_subject_ids, 17, frac_test=0.05)
             train_val_ids = main_split.train_subject_ids
             train_ids = train_split.train_subject_ids
             val_ids = train_split.test_subject_ids
         else:
-            subject_splits = pl.read_parquet(subject_splits_path)
-            train_val_ids = subject_splits.filter(pl.col("split") != "held_out").select("subject_id").to_series().to_list()
-            train_ids = subject_splits.filter(pl.col("split") == "train").select("subject_id").to_series().to_list()
-            val_ids = subject_splits.filter(pl.col("split") == "tuning").select("subject_id").to_series().to_list()
+subject_splits = pl.read_parquet(subject_splits_path)
+train_val_ids = subject_splits.filter(pl.col("split") != "held_out").select("subject_id").to_series().to_list()
+train_ids = subject_splits.filter(pl.col("split") == "train").select("subject_id").to_series().to_list()
+test_split = subject_splits.filter(pl.col("split") == "held_out").select("subject_id").to_series().to_list()
+val_ids = subject_splits.filter(pl.col("split") == "tuning").select("subject_id").to_series().to_list()
         main_database = database.filter(train_val_ids)
         train_database = main_database.filter(train_ids)
         val_database = main_database.filter(val_ids)
