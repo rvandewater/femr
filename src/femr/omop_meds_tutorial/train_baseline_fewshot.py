@@ -18,7 +18,7 @@ import pickle
 
 SEED = 42
 MINIMUM_NUM_CASES = 10
-TRAIN_SIZES = [100, 1000, 10000, 100000]
+TRAIN_SIZES = [100, 1000, 10000, 100000, "all"]
 
 
 def main():
@@ -94,6 +94,9 @@ def main():
         if len(train_labels) < size:
             size = len(train_labels)
             should_terminate = True
+
+        if size == "all":
+            size = len(train_labels)
 
         gbm_parquet_file = task_output_dir / f"gbm_{size}.parquet"
         gbm_output_dir = task_output_dir / f"gbm_{size}"
