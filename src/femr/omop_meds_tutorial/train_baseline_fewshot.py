@@ -29,32 +29,32 @@ def main():
     subject_splits = pl.read_parquet(subject_splits_path)
     models_path = Path(args.pretraining_data) / "models"
     models_path.mkdir(exist_ok=True)
-
-    label_path = models_path.parent / "labels" / (args.cohort_label + '.parquet')
+    cohort_label = str(args.cohort_label).replace('/', '_')
+    label_path = models_path.parent / "labels" / (cohort_label + '.parquet')
     if label_path.exists():
         print(f"Using the user defined label at: {label_path}")
     else:
         raise RuntimeError(f"The user provided label does not exist at {label_path}")
 
     output_dir = models_path.parent / "results"
-    task_output_dir = output_dir / args.cohort_label
+    task_output_dir = output_dir / cohort_label
     task_output_dir.mkdir(exist_ok=True, parents=True)
 
     if args.observation_window:
-        label_output_dir = output_dir / args.cohort_label / f"baseline_{args.observation_window}"
+        label_output_dir = output_dir / cohort_label / f"baseline_{args.observation_window}"
     else:
-        label_output_dir = output_dir / args.cohort_label / f"baseline"
+        label_output_dir = output_dir / cohort_label / f"baseline"
     label_output_dir.mkdir(exist_ok=True, parents=True)
 
     done_file = task_output_dir / "done"
     if done_file.exists():
-        print(f"The results for {args.cohort_label} already exist because the indicator file is present at {done_file}")
+        print(f"The results for {cohort_label} already exist because the indicator file is present at {done_file}")
         exit(0)
 
-    labels = pd.read_parquet(models_path.parent / "labels" / (args.cohort_label + '.parquet'))
+    labels = pd.read_parquet(models_path.parent / "labels" / (cohort_label + '.parquet'))
     labels = labels.sort_values(["subject_id", "prediction_time"])
 
-    with open(models_path.parent / 'features' / get_baseline_features_name(args.cohort_label, args.observation_window),
+    with open(models_path.parent / 'features' / get_baseline_features_name(cohort_label, args.observation_window),
               'rb') as f:
         features = pickle.load(f)
 
@@ -91,12 +91,14 @@ def main():
         if should_terminate:
             break
 
+        if size == "all":
+            size = len(train_labels)
+
         if len(train_labels) < size:
             size = len(train_labels)
             should_terminate = True
 
-        if size == "all":
-            size = len(train_labels)
+
 
         gbm_parquet_file = task_output_dir / f"gbm_{size}.parquet"
         gbm_output_dir = task_output_dir / f"gbm_{size}"
@@ -168,7 +170,7 @@ def main():
             })
             if gbm_test_metrics_file.exists():
                 print(
-                    f"The result already exists for GBM {args.cohort_label} "
+                    f"The result already exists for GBM {cohort_label} "
                     f"at {gbm_test_metrics_file}, it will be skipped!"
                 )
             else:
@@ -213,9 +215,9 @@ def main():
                         dev_data=test_data,
                         num_trees=lightgbm_study.best_trial.user_attrs['num_trees']
                     )
-                    print("gbm", args.cohort_label, final_lightgbm_auroc)
+                    print("gbm", cohort_label, final_lightgbm_auroc)
                     lightgbm_results = {
-                        "label_name": args.cohort_label,
+                        "label_name": cohort_label,
                         "final_lightgbm_auroc": final_lightgbm_auroc,
                     }
                     save_to_json(lightgbm_results, gbm_test_metrics_file)
@@ -235,7 +237,7 @@ def main():
 
             if logistic_test_metrics_file.exists():
                 print(
-                    f"The result already exists for Logistic {args.cohort_label} "
+                    f"The result already exists for Logistic {cohort_label} "
                     f"at {logistic_test_metrics_file}, it will be skipped!"
                 )
             else:
@@ -247,9 +249,9 @@ def main():
                 )
                 logistic_y_pred = logistic_model.predict_proba(test_data['features'])[:, 1]
                 final_logistic_auroc = sklearn.metrics.roc_auc_score(test_data['boolean_values'], logistic_y_pred)
-                print('logistic', final_logistic_auroc, args.cohort_label)
+                print('logistic', final_logistic_auroc, cohort_label)
                 logistic_results = {
-                    "label_name": args.cohort_label,
+                    "label_name": cohort_label,
                     "final_logistic_auroc": final_logistic_auroc
                 }
                 save_to_json(logistic_results, logistic_test_metrics_file)
