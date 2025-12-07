@@ -48,7 +48,7 @@ def main():
         label_path = pretraining_data / "labels" / (args.cohort_label + '.parquet'),
     labels = LABEL_NAMES
     if args.cohort_label is not None:
-        label_path = label_path / args.cohort_label
+        label_path = label_path
         if label_path.exists():
             print(f"Using the user defined label at: {label_path}")
             labels = [args.cohort_label]
